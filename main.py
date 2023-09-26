@@ -10,7 +10,7 @@ import csv
 from typing import TypedDict, TypeVar, Generator
 
 ########## config for default settings
-mode = "geonames_naive" # one of: geonames_naive, geonames_manual
+mode = "geonames_manual" # one of: geonames_naive, geonames_manual
 limit = 10 # how many cities to output
 token_file = "wikipedia_token.txt" # where is the wikipedia access token located
 geonames_file = "geonames.csv" # where is the downloaded geonames csv file located
@@ -89,6 +89,25 @@ def geonames_naive(file: str, token: str, limit: int) -> list[CityInfo]:
 			break
 	return no_article_cities[:limit]
 
+# naively outputting the first n results from geonames
+def geonames_manual(file: str, token: str, limit: int) -> list[CityInfo]:
+	print("by default, all entries are assumed invalid. type \"y\" after a city name if it should be added to the list.")
+	cities = load_geonames(file)
+	no_article_cities: list[CityInfo] = []
+	i = 0
+	for city_chunk in chunk(cities):
+		i += 1
+		missing_cities = get_missing_cities([x["name"] for x in city_chunk], token)
+		for city in missing_cities:
+			should_add = input(f"{city['name']}: ")
+			if(should_add.lower() == "y" or should_add.lower() == "yes"):
+				no_article_cities.append(city_chunk[city["index"]])
+		missing_city_count = len(no_article_cities)
+		print(f"Chunk {i}: {missing_city_count} / {limit}")
+		if(len(no_article_cities) >= limit):
+			break
+	return no_article_cities[:limit]
+
 if __name__ == "__main__":
 
 	# handling wikipedia api tokens
@@ -115,6 +134,9 @@ if __name__ == "__main__":
 	match mode:
 		case "geonames_naive":
 			cities = geonames_naive(geonames_file, wikipedia_token, limit)
+			print(cities)
+		case "geonames_manual":
+			cities = geonames_manual(geonames_file, wikipedia_token, limit)
 			print(cities)
 		case _:
 			print("Invalid mode")
