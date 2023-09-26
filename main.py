@@ -103,7 +103,6 @@ def geonames_manual(file: str, token: str, limit: int) -> list[CityInfo]:
 			if(should_add.lower() == "y" or should_add.lower() == "yes"):
 				no_article_cities.append(city_chunk[city["index"]])
 		missing_city_count = len(no_article_cities)
-		print(f"Chunk {i}: {missing_city_count} / {limit}")
 		if(len(no_article_cities) >= limit):
 			break
 	return no_article_cities[:limit]
